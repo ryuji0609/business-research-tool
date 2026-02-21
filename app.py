@@ -208,6 +208,18 @@ st.markdown("""
         box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
     }
     
+    /* スマホ（iPhone等WebKit）でプレースホルダー（ヒント文字）が見えなくなるバグの修正 */
+    .stTextInput > div > div > input::placeholder, 
+    .stNumberInput > div > div > input::placeholder {
+        color: #a0aab5 !important;
+        opacity: 1 !important;
+    }
+    .stTextInput > div > div > input::-webkit-input-placeholder, 
+    .stNumberInput > div > div > input::-webkit-input-placeholder {
+        color: #a0aab5 !important;
+        opacity: 1 !important;
+    }
+    
     /* コンテナ（エクスパンダー等）デザイン */
     .streamlit-expanderHeader {
         font-weight: 500;
