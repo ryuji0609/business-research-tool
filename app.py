@@ -93,31 +93,107 @@ if not check_login():
     st.stop()
 
 
-# --- スタイル ---
+# --- スタイル（近未来モダンUI / スマホ完全対応） ---
 st.markdown("""
     <style>
-    .main {
-        background-color: #f8f9fa;
+    /* 全体背景とフォント */
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap');
+    html, body, [class*="css"]  {
+        font-family: 'Noto Sans JP', sans-serif;
     }
+    
+    /* ヘッダー周りの非表示（クリーンなSaaSにするため） */
+    header {visibility: hidden;}
+    #MainMenu {visibility: hidden;}
+    
+    /* メインタイトルグラデーション */
+    h1 {
+        background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 900 !important;
+        letter-spacing: -1px;
+        margin-bottom: 0.5rem;
+    }
+    
+    /* サブタイトル */
+    .stMarkdown p {
+        font-size: 1.05rem;
+        color: #555555;
+    }
+
+    /* 実行ボタンの超リッチ化（スマホでも押しやすく） */
     .stButton>button {
         width: 100%;
-        border-radius: 5px;
-        height: 3em;
-        background-color: #007bff;
-        color: white;
+        border-radius: 12px;
+        height: 3.5rem;
+        background: linear-gradient(135deg, #0cebeb 0%, #20e3b2 50%, #29ffc6 100%);
+        color: #1a1a1a;
+        font-size: 1.2rem;
+        font-weight: bold;
+        border: none;
+        box-shadow: 0 4px 15px rgba(41, 255, 198, 0.4);
+        transition: all 0.3s ease;
     }
+    .stButton>button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(41, 255, 198, 0.6);
+        background: linear-gradient(135deg, #29ffc6 0%, #20e3b2 50%, #0cebeb 100%);
+        color: #000;
+    }
+    .stButton>button:active {
+        transform: translateY(1px);
+    }
+    
+    /* プログレスバーのリッチ化 */
     .stProgress > div > div > div > div {
-        background-color: #007bff;
+        background-image: linear-gradient(to right, #4facfe 0%, #00f2fe 100%);
+        border-radius: 10px;
+    }
+    
+    /* メトリック（利用状況）のカード化 */
+    [data-testid="stMetricValue"] {
+        font-size: 2.5rem !important;
+        font-weight: 900 !important;
+        color: #4facfe !important;
+    }
+    
+    /* モバイル向け入力フォームの調整 */
+    .stTextInput > div > div > input, .stNumberInput > div > div > input {
+        border-radius: 8px;
+        padding: 0.8rem;
+        border: 1px solid #e0e0e0;
+        transition: all 0.2s;
+    }
+    .stTextInput > div > div > input:focus, .stNumberInput > div > div > input:focus {
+        border-color: #4facfe;
+        box-shadow: 0 0 0 2px rgba(79, 172, 254, 0.2);
+    }
+    
+    /* 会員ログインのコンテナ装飾 */
+    [data-testid="stForm"] {
+        background: #ffffff;
+        padding: 2rem;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        border: 1px solid #f0f0f0;
     }
     </style>
     """, unsafe_allow_html=True)
 
+
 # --- サイドバー設定 ---
 with st.sidebar:
-    st.title("👤 アカウント情報")
+    st.markdown("## 🚀 Dashboard")
     user_info = st.session_state.get("user_info", {})
-    st.write(f"**ユーザーID**: {user_info.get('user_id', 'ローカル(または未設定)')}")
-    st.write(f"**今日の利用状況**: {user_info.get('current_usage', 0)} / {user_info.get('max_usage', 1000)} 件")
+    user_id = user_info.get('user_id', '未設定')
+    current_usage = user_info.get('current_usage', 0)
+    max_usage = user_info.get('max_usage', 0)
+    
+    st.markdown(f"**こんにちは、{user_id}さん！**")
+    
+    # リッチなダッシュボード表示
+    st.metric(label="本日の残り利用可能枠", value=f"{max_usage - current_usage} 件", delta=f"/{max_usage} 上限", delta_color="off")
     
     st.divider()
     
@@ -147,19 +223,20 @@ with st.sidebar:
     st.info("このツールは、指定した条件で企業情報を収集し、CSV保存とスプレッドシートへの送信を行います。")
 
 # --- メイン画面 ---
-st.title("🔍 企業リサーチツール Pro")
-st.write("業種と地域を入力して、ターゲット企業の連絡先を瞬時にリストアップします。")
+st.markdown("<h1>✨直営業を自動化する 企業リサーチツール Pro</h1>", unsafe_allow_html=True)
+st.write("ターゲットにする「業種」と「地域」を入れるだけで、AIが瞬時に営業先リストを生成。あなただけの最強の営業データベースを作り上げます。")
+st.markdown("<br>", unsafe_allow_html=True)
 
 col1, col2, col3 = st.columns([2, 2, 1])
 
 with col1:
-    industry = st.text_input("業種", placeholder="例: 美容院, 飲食店, Web制作会社")
+    industry = st.text_input("🎯 業種", placeholder="例: 美容院, 飲食店, Web制作会社")
 with col2:
-    region = st.text_input("地域", placeholder="例: 埼玉県, 渋谷区, 大阪")
+    region = st.text_input("📍 地域", placeholder="例: 埼玉県, 渋谷区, 大阪")
 with col3:
-    # 利用枠の上限に合わせて最大取得件数も制限する
     max_usage_limit = st.session_state.get("user_info", {}).get("max_usage", 1000) - st.session_state.get("user_info", {}).get("current_usage", 0)
-    max_count = st.number_input("最大取得件数", min_value=1, max_value=max(1, max_usage_limit), value=min(50, max(1, max_usage_limit)), step=10, help=f"本日の残り利用可能枠: {max_usage_limit}件")
+    max_count = st.number_input("📥 取得件数", min_value=1, max_value=max(1, max_usage_limit), value=min(50, max(1, max_usage_limit)), step=10, help=f"本日の残り利用可能枠: {max_usage_limit}件")
+
 
 # urls.txt の読み込み（あれば）
 urls_file = os.path.join(script_dir, "urls.txt")
