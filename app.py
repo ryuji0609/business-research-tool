@@ -24,6 +24,43 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+# --- ログイン・認証機能 ---
+def check_password():
+    """設定されたパスワードに一致する場合のみTrueを返す"""
+    master_password = st.secrets.get("APP_PASSWORD", "")
+    
+    # SecretsにAPP_PASSWORDが設定されていない場合（ローカルなど）はそのまま使えるようにする
+    if not master_password:
+        return True
+
+    def password_entered():
+        import hmac
+        # 入力されたパスワードと、設定されたパスワードが一致するかを安全に比較
+        if hmac.compare_digest(st.session_state["password"], master_password):
+            st.session_state["password_correct"] = True
+            del st.session_state["password"]  # セッションから消去して安全性を高める
+        else:
+            st.session_state["password_correct"] = False
+
+    if "password_correct" not in st.session_state:
+        st.markdown("## 🔒 会員専用ログイン")
+        st.info("このツールは会員限定です。パスワードを入力してアクセスしてください。")
+        st.text_input("パスワード", type="password", on_change=password_entered, key="password")
+        return False
+    elif not st.session_state["password_correct"]:
+        st.markdown("## 🔒 会員専用ログイン")
+        st.info("このツールは会員限定です。パスワードを入力してアクセスしてください。")
+        st.text_input("パスワード", type="password", on_change=password_entered, key="password")
+        st.error("😕 パスワードが間違っています。")
+        return False
+        
+    return True
+
+# パスワードが間違っている場合、ここから下のメイン画面コードは一切実行（表示）されない
+if not check_password():
+    st.stop()
+
+
 # --- スタイル ---
 st.markdown("""
     <style>
