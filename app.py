@@ -113,14 +113,23 @@ st.markdown("""
         background: linear-gradient(120deg, #f0f4fd 0%, #fefefe 40%, #f6f8fa 100%);
     }
 
-    /* メインタイトル：スマホでも見切れないように可変サイズ（レスポンシブ）にする */
-    h1 {
-        font-weight: 500 !important;
+    /* メインタイトル：iOS等でヘッダーの下に隠れないようにする専用クラス */
+    .main-title {
+        font-weight: 500;
         color: #1a2b4c;
         letter-spacing: 0.5px;
+        margin-top: 1rem;
         margin-bottom: 0.2rem;
-        font-size: clamp(1.8rem, 5vw, 2.5rem) !important;
+        font-size: 2.2rem;
         line-height: 1.2;
+    }
+    
+    /* スマホ画面向けの調整（上部余白とフォントサイズ） */
+    @media (max-width: 768px) {
+        .main-title {
+            margin-top: 3rem;
+            font-size: 1.8rem;
+        }
     }
     
     /* サブタイトル・テキスト：グレーで落ち着いた印象に */
@@ -262,7 +271,7 @@ with st.sidebar:
     st.info("このツールは、指定した条件で企業情報を収集し、CSV保存とスプレッドシートへの送信を行います。")
 
 # --- メイン画面 ---
-st.markdown("<h1>Target Search</h1>", unsafe_allow_html=True)
+st.markdown('<div class="main-title">Target Search</div>', unsafe_allow_html=True)
 st.write("精度の高いリストを秒速で組み立てる、次世代の直営業自動化ソリューション。")
 st.markdown("<br>", unsafe_allow_html=True)
 
