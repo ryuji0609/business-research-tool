@@ -96,87 +96,125 @@ if not check_login():
 # --- スタイル（近未来モダンUI / スマホ完全対応） ---
 st.markdown("""
     <style>
-    /* 全体背景とフォント */
-    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap');
-    html, body, [class*="css"]  {
+    /* 全体背景とフォント（クリーン＆ミニマル） */
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap');
+    
+    html, body, [class*="css"] {
         font-family: 'Noto Sans JP', sans-serif;
+        color: #2c3e50;
+        background-color: #fafbfc;
     }
     
-    /* ヘッダー周りの非表示（クリーンなSaaSにするため） */
+    /* ヘッダー周りの非表示 */
     header {visibility: hidden;}
     #MainMenu {visibility: hidden;}
-    
-    /* メインタイトルグラデーション */
-    h1 {
-        background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        font-weight: 900 !important;
-        letter-spacing: -1px;
-        margin-bottom: 0.5rem;
-    }
-    
-    /* サブタイトル */
-    .stMarkdown p {
-        font-size: 1.05rem;
-        color: #555555;
+
+    /* アプリ全体のコンテナに淡い波のようなグラデーション背景を敷く */
+    .stApp {
+        background: linear-gradient(120deg, #f0f4fd 0%, #fefefe 40%, #f6f8fa 100%);
     }
 
-    /* 実行ボタンの超リッチ化（スマホでも押しやすく） */
+    /* メインタイトル：シンプルで洗練された細めのフォント */
+    h1 {
+        font-weight: 500 !important;
+        color: #1a2b4c;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.2rem;
+        font-size: 2.2rem !important;
+    }
+    
+    /* サブタイトル・テキスト：グレーで落ち着いた印象に */
+    .stMarkdown p {
+        font-size: 1.0rem;
+        color: #636e72;
+        font-weight: 300;
+        line-height: 1.6;
+    }
+
+    /* ボタンのエレガント化（金融SaaS風の信頼感あるブルー） */
     .stButton>button {
         width: 100%;
-        border-radius: 12px;
-        height: 3.5rem;
-        background: linear-gradient(135deg, #0cebeb 0%, #20e3b2 50%, #29ffc6 100%);
-        color: #1a1a1a;
-        font-size: 1.2rem;
-        font-weight: bold;
-        border: none;
-        box-shadow: 0 4px 15px rgba(41, 255, 198, 0.4);
-        transition: all 0.3s ease;
+        border-radius: 30px; /* 少し丸みを持たせて柔らかく */
+        height: 3.2rem;
+        background-color: #ffffff;
+        color: #0d47a1;
+        font-size: 1.05rem;
+        font-weight: 500;
+        border: 1px solid #d0dce8;
+        box-shadow: 0 4px 10px rgba(13, 71, 161, 0.05);
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     }
     .stButton>button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(41, 255, 198, 0.6);
-        background: linear-gradient(135deg, #29ffc6 0%, #20e3b2 50%, #0cebeb 100%);
-        color: #000;
+        background-color: #0d47a1;
+        color: #ffffff;
+        border-color: #0d47a1;
+        box-shadow: 0 6px 15px rgba(13, 71, 161, 0.15);
+        transform: translateY(-1px);
     }
     .stButton>button:active {
         transform: translateY(1px);
+        box-shadow: none;
     }
     
-    /* プログレスバーのリッチ化 */
+    /* メインのアクションボタン（リサーチ開始など）は最初から色付け（Primary等） */
+    .stButton [data-testid="baseButton-primary"] {
+        background-color: #0d47a1;
+        color: #ffffff;
+        border: none;
+    }
+    .stButton [data-testid="baseButton-primary"]:hover {
+        background-color: #1565c0;
+        box-shadow: 0 8px 20px rgba(21, 101, 192, 0.25);
+    }
+
+    /* プログレスバー：細く、クリーンなブルー */
     .stProgress > div > div > div > div {
-        background-image: linear-gradient(to right, #4facfe 0%, #00f2fe 100%);
+        background-color: #1e88e5;
         border-radius: 10px;
     }
     
-    /* メトリック（利用状況）のカード化 */
+    /* メトリック（利用状況）のタイポグラフィ */
     [data-testid="stMetricValue"] {
-        font-size: 2.5rem !important;
-        font-weight: 900 !important;
-        color: #4facfe !important;
+        font-size: 2.2rem !important;
+        font-weight: 400 !important;
+        color: #1a2b4c !important;
+    }
+    [data-testid="stMetricDelta"] > div {
+        color: #7f8fa6 !important;
     }
     
-    /* モバイル向け入力フォームの調整 */
+    /* 入力フォーム枠の洗練化：極細のボーダーと角丸 */
     .stTextInput > div > div > input, .stNumberInput > div > div > input {
         border-radius: 8px;
-        padding: 0.8rem;
-        border: 1px solid #e0e0e0;
-        transition: all 0.2s;
+        padding: 0.7rem 1rem;
+        border: 1px solid #e1e5eb;
+        background-color: #ffffff;
+        color: #2c3e50;
+        font-size: 0.95rem;
+        transition: border-color 0.2s, box-shadow 0.2s;
     }
     .stTextInput > div > div > input:focus, .stNumberInput > div > div > input:focus {
-        border-color: #4facfe;
-        box-shadow: 0 0 0 2px rgba(79, 172, 254, 0.2);
+        border-color: #4facfe; /* フォーカス時のみ淡いブルー */
+        box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
     }
     
-    /* 会員ログインのコンテナ装飾 */
+    /* コンテナ（エクスパンダー等）デザイン */
+    .streamlit-expanderHeader {
+        font-weight: 500;
+        color: #2d3436;
+        border-bottom: 1px solid #f1f2f6;
+    }
+
+    /* 会員ログインのコンテナ部分 */
     [data-testid="stForm"] {
-        background: #ffffff;
-        padding: 2rem;
-        border-radius: 16px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-        border: 1px solid #f0f0f0;
+        background: rgba(255, 255, 255, 0.85); /* 半透明ガラス風 */
+        backdrop-filter: blur(10px);
+        padding: 2.5rem 2rem;
+        border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(31, 38, 135, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        max-width: 500px;
+        margin: 0 auto; /* 中央寄せ */
     }
     </style>
     """, unsafe_allow_html=True)
@@ -223,8 +261,8 @@ with st.sidebar:
     st.info("このツールは、指定した条件で企業情報を収集し、CSV保存とスプレッドシートへの送信を行います。")
 
 # --- メイン画面 ---
-st.markdown("<h1>✨直営業を自動化する 企業リサーチツール Pro</h1>", unsafe_allow_html=True)
-st.write("ターゲットにする「業種」と「地域」を入れるだけで、AIが瞬時に営業先リストを生成。あなただけの最強の営業データベースを作り上げます。")
+st.markdown("<h1>Target Search</h1>", unsafe_allow_html=True)
+st.write("精度の高いリストを秒速で組み立てる、次世代の直営業自動化ソリューション。")
 st.markdown("<br>", unsafe_allow_html=True)
 
 col1, col2, col3 = st.columns([2, 2, 1])
@@ -267,7 +305,7 @@ else:
             help="検索がうまくいかない場合や、特定のサイトだけ調べたい時に便利です。"
         )
 
-start_button = st.button("🚀 リサーチ開始")
+start_button = st.button("リサーチを開始する", type="primary")
 
 if start_button:
     results = []
