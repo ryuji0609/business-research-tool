@@ -105,8 +105,7 @@ st.markdown("""
         background-color: #fafbfc;
     }
     
-    /* ヘッダー周りの非表示 */
-    header {visibility: hidden;}
+    /* ヘッダー周りは残す（スマホでハンバーガーメニューを開くため） */
     #MainMenu {visibility: hidden;}
 
     /* アプリ全体のコンテナに淡い波のようなグラデーション背景を敷く */
@@ -114,13 +113,14 @@ st.markdown("""
         background: linear-gradient(120deg, #f0f4fd 0%, #fefefe 40%, #f6f8fa 100%);
     }
 
-    /* メインタイトル：シンプルで洗練された細めのフォント */
+    /* メインタイトル：スマホでも見切れないように可変サイズ（レスポンシブ）にする */
     h1 {
         font-weight: 500 !important;
         color: #1a2b4c;
         letter-spacing: 0.5px;
         margin-bottom: 0.2rem;
-        font-size: 2.2rem !important;
+        font-size: clamp(1.8rem, 5vw, 2.5rem) !important;
+        line-height: 1.2;
     }
     
     /* サブタイトル・テキスト：グレーで落ち着いた印象に */
@@ -183,15 +183,16 @@ st.markdown("""
         color: #7f8fa6 !important;
     }
     
-    /* 入力フォーム枠の洗練化：極細のボーダーと角丸 */
+    /* 入力フォーム枠の洗練化：極細のボーダーと角丸 + スマホでの文字色バグ修正 */
     .stTextInput > div > div > input, .stNumberInput > div > div > input {
         border-radius: 8px;
         padding: 0.7rem 1rem;
         border: 1px solid #e1e5eb;
-        background-color: #ffffff;
-        color: #2c3e50;
-        font-size: 0.95rem;
+        background-color: #ffffff !important;
+        color: #2c3e50 !important;
+        font-size: 1rem !important;
         transition: border-color 0.2s, box-shadow 0.2s;
+        -webkit-appearance: none; /* スマホ特有のスタイルをリセット */
     }
     .stTextInput > div > div > input:focus, .stNumberInput > div > div > input:focus {
         border-color: #4facfe; /* フォーカス時のみ淡いブルー */
