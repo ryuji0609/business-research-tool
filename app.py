@@ -24,40 +24,72 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# --- ログイン・認証機能 ---
-def check_password():
-    """設定されたパスワードに一致する場合のみTrueを返す"""
-    master_password = st.secrets.get("APP_PASSWORD", "")
+# --- SaaS ログイン・ユーザー管理機能 ---
+import requests
+import json
+
+def check_login():
+    """GAS API（DB）に問い合わせてログインを行う"""
+    manager_url = st.secrets.get("MANAGER_GAS_URL", "")
     
-    # SecretsにAPP_PASSWORDが設定されていない場合（ローカルなど）はそのまま使えるようにする
-    if not master_password:
+    # マネージャーURLが未設定の場合（ローカル開発用など）は通過させる
+    if not manager_url:
+        st.session_state["user_info"] = {
+            "gas_url": st.secrets.get("GAS_URL", ""),
+            "current_usage": 0,
+            "max_usage": 1000
+        }
         return True
 
-    def password_entered():
-        import hmac
-        # 入力されたパスワードと、設定されたパスワードが一致するかを安全に比較
-        if hmac.compare_digest(st.session_state["password"], master_password):
-            st.session_state["password_correct"] = True
-            del st.session_state["password"]  # セッションから消去して安全性を高める
-        else:
-            st.session_state["password_correct"] = False
+    if "user_info" in st.session_state:
+        return True
 
-    if "password_correct" not in st.session_state:
-        st.markdown("## 🔒 会員専用ログイン")
-        st.info("このツールは会員限定です。パスワードを入力してアクセスしてください。")
-        st.text_input("パスワード", type="password", on_change=password_entered, key="password")
-        return False
-    elif not st.session_state["password_correct"]:
-        st.markdown("## 🔒 会員専用ログイン")
-        st.info("このツールは会員限定です。パスワードを入力してアクセスしてください。")
-        st.text_input("パスワード", type="password", on_change=password_entered, key="password")
-        st.error("😕 パスワードが間違っています。")
-        return False
+    # ログイン済でなければログイン画面を表示
+    st.markdown("## 🔒 会員専用ログイン")
+    st.info("SaaS版 企業リサーチツールへようこそ。発行されたIDとパスワードを入力してください。")
+    
+    with st.form("login_form"):
+        user_id = st.text_input("ユーザーID")
+        password = st.text_input("パスワード", type="password")
+        submit_button = st.form_submit_button("ログイン")
         
-    return True
+        if submit_button:
+            if not user_id or not password:
+                st.error("IDとパスワードを入力してください。")
+                return False
+                
+            with st.spinner("認証中..."):
+                try:
+                    payload = {
+                        "action": "login",
+                        "user_id": user_id,
+                        "password": password
+                    }
+                    response = requests.post(manager_url, json=payload, timeout=10)
+                    if response.status_code == 200:
+                        result = response.json()
+                        if result.get("success"):
+                            st.session_state["user_info"] = {
+                                "user_id": user_id,
+                                "gas_url": result.get("gas_url"),
+                                "current_usage": result.get("current_usage"),
+                                "max_usage": result.get("max_usage")
+                            }
+                            st.session_state["password"] = password # API消費用に保持
+                            st.rerun()
+                        else:
+                            st.error(f"ログイン失敗: {result.get('message')}")
+                    else:
+                        st.error(f"サーバーエラー: {response.status_code}")
+                except Exception as e:
+                    st.error(f"通信エラーが発生しました: {e}")
+            return False
+            
+    return False
 
-# パスワードが間違っている場合、ここから下のメイン画面コードは一切実行（表示）されない
-if not check_password():
+# ログインしていない場合はここでストップ
+if not check_login():
+
     st.stop()
 
 
@@ -82,11 +114,18 @@ st.markdown("""
 
 # --- サイドバー設定 ---
 with st.sidebar:
+    st.title("👤 アカウント情報")
+    user_info = st.session_state.get("user_info", {})
+    st.write(f"**ユーザーID**: {user_info.get('user_id', 'ローカル(または未設定)')}")
+    st.write(f"**今日の利用状況**: {user_info.get('current_usage', 0)} / {user_info.get('max_usage', 1000)} 件")
+    
+    st.divider()
+    
     st.title("⚙️ 設定")
     gas_url = st.text_input(
         "Googleスプレッドシート (GAS URL)",
-        value="https://script.google.com/macros/s/AKfycbzvixEvfoYYuJyx4HrHDQSawutXr37Jm1b54eJ-SNDKa7aT0q6bOsH2UcAwWsqQKSJH/exec",
-        help="GASをデプロイした際の発行URLを入力してください。"
+        value=user_info.get('gas_url', ''),
+        help="あなた専用のデータ保存先です。"
     )
     # クラウド（またはローカル設定）のSecretsからキーを安全に読み込む
     default_serper = st.secrets.get("SERPER_API_KEY", "") if "SERPER_API_KEY" in st.secrets else ""
@@ -118,7 +157,9 @@ with col1:
 with col2:
     region = st.text_input("地域", placeholder="例: 埼玉県, 渋谷区, 大阪")
 with col3:
-    max_count = st.number_input("最大取得件数", min_value=1, max_value=500, value=50, step=10)
+    # 利用枠の上限に合わせて最大取得件数も制限する
+    max_usage_limit = st.session_state.get("user_info", {}).get("max_usage", 1000) - st.session_state.get("user_info", {}).get("current_usage", 0)
+    max_count = st.number_input("最大取得件数", min_value=1, max_value=max(1, max_usage_limit), value=min(50, max(1, max_usage_limit)), step=10, help=f"本日の残り利用可能枠: {max_usage_limit}件")
 
 # urls.txt の読み込み（あれば）
 urls_file = os.path.join(script_dir, "urls.txt")
@@ -190,6 +231,40 @@ if start_button:
                 if not serper_api_key:
                     st.info("💡 対策: 検索エンジンにブロックされています。左側メニューの「Serper APIキー」を設定すると回避できます。")
                 st.stop()
+            
+            # 取得したURLリストを利用上限枠に合わせてカット
+            user_info = st.session_state.get("user_info", {})
+            current_usage = user_info.get("current_usage", 0)
+            max_usage = user_info.get("max_usage", 1000)
+            available = max_usage - current_usage
+            
+            if available <= 0:
+                st.error(f"本日の利用上限（{max_usage}件）に達しています。明日またご利用ください。")
+                st.stop()
+                
+            if len(urls) > available:
+                st.warning(f"本日の残り上限（{available}件）を超えるため、{available}件に制限して取得します。")
+                urls = urls[:available]
+                
+            # --- API消費処理（SaaS DBへ連絡） ---
+            manager_url = st.secrets.get("MANAGER_GAS_URL", "")
+            user_id = user_info.get("user_id")
+            password_used = st.session_state.get("password")
+            consume_count = len(urls)
+            
+            if manager_url and user_id and password_used and consume_count > 0:
+                try:
+                    resp = requests.post(manager_url, json={
+                        "action": "consume",
+                        "user_id": user_id,
+                        "password": password_used,
+                        "count": consume_count
+                    }, timeout=5)
+                    if resp.status_code == 200 and resp.json().get("success"):
+                        st.session_state["user_info"]["current_usage"] = resp.json().get("current_usage")
+                except Exception as e:
+                    pass # エラー時はとりあえず処理を続行
+            # ----------------------------------
             
             st.write(f"✅ {len(urls)} 件の対象URLを特定しました。")
             
